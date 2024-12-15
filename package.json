@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:socket\"",
     "dev:next": "next dev",
-    "dev:socket": "node --experimental-loader ./path-loader.mjs --loader ts-node/esm socket-server-entry.ts",
+    "dev:socket": "node --loader ts-node/esm socket-server-entry.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
