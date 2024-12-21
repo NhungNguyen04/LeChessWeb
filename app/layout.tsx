@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Azeret_Mono as Geist_Mono } from 'next/font/google';
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
-import "./navbar.css"; // Import the new CSS file for the navbar
+import "./navbar.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,18 +31,26 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <nav className="navbar">
-          <ul className="navbar-list">
-            <li className="navbar-item">
-              <Link href="/">Home</Link>
-            </li>
-            <li className="navbar-item">
-              <Link href="/profile">Profile</Link>
-            </li>
-          </ul>
+          <div className="navbar-container">
+            <Link href="/" className="navbar-logo">
+              LeChess Web
+            </Link>
+            <ul className="navbar-list">
+              <li className="navbar-item">
+                <Link href="/">Home</Link>
+              </li>
+              <li className="navbar-item">
+                <Link href="/profile">Profile</Link>
+              </li>
+            </ul>
+          </div>
         </nav>
-        {children}
-        <ToastContainer />
+        <main className="main-content">
+          {children}
+        </main>
+        <ToastContainer className="toast-container" />
       </body>
     </html>
   );
 }
+

@@ -93,6 +93,10 @@ export default function PlayAIScreen() {
         console.error("Error:", error);
       });
 
+    if (piece?.startsWith("b")) {
+      // socket.emit("move", { from: sourceSquare, to: targetSquare, color: "b" });
+    }
+
     return true;
   }
 

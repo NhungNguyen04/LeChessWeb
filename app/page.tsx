@@ -1,8 +1,11 @@
 "use client"
-import { Button } from "@/components/ui/button.tsx";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { io, Socket } from "socket.io-client";
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
+import { io, Socket } from "socket.io-client"
+import { DiamondIcon as ChessIcon, BotIcon, Users, Radio } from 'lucide-react'
 
 class ClientSocket {
   private socket: Socket;
@@ -21,10 +24,10 @@ class ClientSocket {
       console.log("Disconnected from socket server");
     });
 
-    // ...additional event handlers...
+    // Additional event handlers would go here
   }
 
-  // ...additional methods if needed...
+  // Additional methods would go here
 }
 
 export default function Home() {
@@ -42,10 +45,49 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 pb-20 gap-4 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gray-100">
-      <Button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mb-4" onClick={() => router.push("/playAI")}>Play with AI</Button>
-      <Button className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700">Play with Friends</Button>
-      <Button className="bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700" onClick={connectSocket}>Connect to Socket</Button>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-8 flex items-center justify-center">
+      <Card className="w-full max-w-2xl shadow-xl border-none bg-white/80 backdrop-blur-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2">
+            <ChessIcon className="h-8 w-8 text-indigo-600" />
+            Chess Portal
+          </CardTitle>
+          <CardDescription className="text-lg">Choose your game mode</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Button 
+              size="lg" 
+              className="h-32 text-lg font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 ease-in-out transform hover:scale-105"
+              onClick={() => router.push("/playAI")}
+            >
+              <div className="flex flex-col items-center gap-3">
+                <BotIcon className="h-10 w-10" />
+                <span>Play with LiChess AI</span>
+              </div>
+            </Button>
+            <Button 
+              size="lg"
+              className="h-32 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 ease-in-out transform hover:scale-105"
+              onClick={() => router.push("/playFriend")}
+            >
+              <div className="flex flex-col items-center gap-3">
+                <Users className="h-10 w-10" />
+                <span>Play with a friend from LiChess</span>
+              </div>
+            </Button>
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full h-16 text-lg font-semibold border-2 border-purple-500 text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out"
+            onClick={connectSocket}
+          >
+            <Radio className="h-6 w-6 mr-2" />
+            Connect to Socket
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+

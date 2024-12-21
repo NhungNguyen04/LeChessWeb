@@ -3,7 +3,7 @@ import { readStream } from './ndJsonStream';
 
 export const lichessHost = 'https://lichess.org';
 // export const lichessHost = 'http://l.org';
-export const scopes = ['board:play'];
+export const scopes = ['board:play', 'challenge:read', 'challenge:write'];
 export const clientId = 'lichess-api-demo';
 export const clientUrl = `${location.protocol}//${location.host}${'/'}`;
 

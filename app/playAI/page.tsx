@@ -94,7 +94,7 @@ export default function LichessAIGame() {
       }
       const data = await response.json();
       console.log(data);
-      router.push(`/playAI/${data.id}`)
+      router.push(`/${data.id}`)
     } catch (err) {
       setError('Error starting the game. Please try again.');
       console.error('Start game error:', err);

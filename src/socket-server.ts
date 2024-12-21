@@ -24,6 +24,12 @@ class SocketServer {
         console.log("user disconnected");
       });
 
+      socket.on("move", (move) => {
+        if (move.color === "b") {
+          socket.broadcast.emit("opponentMove", move);
+        }
+      });
+
       // ...additional event handlers...
     });
 
