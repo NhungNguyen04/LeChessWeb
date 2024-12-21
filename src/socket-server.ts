@@ -10,7 +10,9 @@ class SocketServer {
     this.io = new Server(this.server, {
       cors: {
         origin: "*",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        credentials: true
       }
     });
     this.initialize();
@@ -18,17 +20,21 @@ class SocketServer {
 
   private initialize() {
     this.io.on("connection", (socket) => {
-      console.log("a user connected");
+      console.log("a user connected", socket.id);
 
       socket.on("disconnect", () => {
         console.log("user disconnected");
       });
 
-      socket.on("move", (move) => {
-        if (move.color === "b") {
-          socket.broadcast.emit("opponentMove", move);
-        }
+      socket.on("opponentMove", (move) => {
+        socket.broadcast.emit("opponentMove", move);
       });
+
+      socket.on("whiteMove", (move) => {
+        console.log("Received whiteMove from client:", move); // <--- ADD LOG
+        socket.broadcast.emit("whiteMove", move);
+      });
+      
 
       // ...additional event handlers...
     });

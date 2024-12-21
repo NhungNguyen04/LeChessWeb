@@ -4,31 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
-import { io, Socket } from "socket.io-client"
 import { DiamondIcon as ChessIcon, BotIcon, Users, Radio } from 'lucide-react'
 
-class ClientSocket {
-  private socket: Socket;
-
-  constructor() {
-    this.socket = io("http://localhost:4000");
-    this.initialize();
-  }
-
-  private initialize() {
-    this.socket.on("connect", () => {
-      console.log("Connected to socket server");
-    });
-
-    this.socket.on("disconnect", () => {
-      console.log("Disconnected from socket server");
-    });
-
-    // Additional event handlers would go here
-  }
-
-  // Additional methods would go here
-}
 
 export default function Home() {
   const router = useRouter();
@@ -38,11 +15,6 @@ export default function Home() {
     router.push('/login');
     return null;
   }
-
-  const connectSocket = () => {
-    const clientSocket = new ClientSocket();
-    console.log(clientSocket);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-8 flex items-center justify-center">
@@ -77,14 +49,6 @@ export default function Home() {
               </div>
             </Button>
           </div>
-          <Button 
-            variant="outline" 
-            className="w-full h-16 text-lg font-semibold border-2 border-purple-500 text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out"
-            onClick={connectSocket}
-          >
-            <Radio className="h-6 w-6 mr-2" />
-            Connect to Socket
-          </Button>
         </CardContent>
       </Card>
     </div>
