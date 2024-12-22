@@ -1,12 +1,11 @@
 "use client"
+
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-// Import Socket.IO client
-import { io, Socket } from "socket.io-client";
 
 export default function PlayAIScreen() {
   const { fetchBody, openStream } = useAuth();
@@ -19,7 +18,6 @@ export default function PlayAIScreen() {
   const [whitePlayer, setWhitePlayer] = useState<string>("");
   const [blackPlayer, setBlackPlayer] = useState<string>("");
 
-  const socket: Socket = io("http://localhost:4000");
   useEffect(() => {
     const handler = (msg: any) => {
       console.log(msg);
@@ -31,24 +29,26 @@ export default function PlayAIScreen() {
         );
       }
 
-      // If there's a new move in gameState and the total moves are even,
-      // that typically indicates Black just moved (since White moves first).
-      if (msg.type === "gameState" && msg.moves.split(" ").length % 2 === 0) {
+      if (msg.type === "gameState" && msg.moves) {
         const moves = msg.moves.split(" ");
-        const lastMove = moves[moves.length - 1]; // e.g. "e7e5"
+        const lastMove = moves[moves.length - 1];
 
-        // Apply the black move locally
         game.move({
           from: lastMove.slice(0, 2),
-          to: lastMove.slice(2, 4),
-          promotion: "q", // simplistic promotion
+          to: lastMove.slice(2, 4)
         });
-
-        // Emit black move to the Pi (raspberry) so it can display it
-        socket.emit("opponentMove", lastMove);
 
         setGamePosition(game.fen());
         setCurrentTurn(game.turn() === "w" ? "White" : "Black");
+
+        // Post the black move to our API
+        if (game.turn() === 'w') { // If it's white's turn, black just moved
+          fetch('/api/moves', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ move: lastMove, color: 'black' })
+          });
+        }
       }
     };
 
@@ -57,106 +57,59 @@ export default function PlayAIScreen() {
       { headers: { Authorization: `Bearer ${localStorage.getItem("lichess_token")}` } },
       handler
     );
-  }, [gameId, openStream, game, socket]);
+  }, [gameId, openStream, game]);
 
-  /**
-   * 2) Listen for White moves from the Raspberry Pi.
-   *    - The Pi sends something like "e2e4" as `whiteMove`.
-   *    - We apply that move locally and call the Lichess API.
-   */
   useEffect(() => {
-    socket.on("whiteMove", (moveString: string) => {
-      console.log("White move from Pi:", moveString);
-      const from = moveString.slice(0, 2);
-      const to = moveString.slice(2, 4);
+    const checkForWhiteMove = async () => {
+      // Only fetch if it's White's turn
+      if (game.turn() !== "w") return;
 
-      // Attempt the move locally
-      const move = game.move({
-        from,
-        to,
-        promotion: "q",
-      });
+      const response = await fetch("/api/moves?color=white");
+      const data = await response.json();
 
-      if (move === null) {
-        console.error("Invalid white move from Pi:", moveString);
-        return;
-      }
+      if (data.move && game.turn() === "w") {
+        const from = data.move.slice(0, 2);
+        const to = data.move.slice(2, 4);
 
-      setGamePosition(game.fen());
-      setHighlightSquares({});
-      setCurrentTurn(game.turn() === "w" ? "White" : "Black");
-
-      // Send the white move to Lichess
-      fetchBody(`/api/board/game/${gameId}/move/${move.from}${move.to}`, {
-        method: "post",
-        headers: { Authorization: `Bearer ${localStorage.getItem("lichess_token")}` },
-      })
-        .then((response) => {
-          console.log("Posted White move (from Pi) to Lichess:", response);
-        })
-        .catch((error) => {
-          console.error("Error posting White move to Lichess:", error);
+        const move = game.move({
+          from,
+          to
         });
-    });
 
-    // Cleanup: avoid multiple listeners if the component re-mounts
-    return () => {
-      socket.off("whiteMove");
+        if (move !== null) {
+          setGamePosition(game.fen());
+          setHighlightSquares({});
+          setCurrentTurn(game.turn() === "w" ? "White" : "Black");
+
+          fetchBody(`/api/board/game/${gameId}/move/${move.from}${move.to}`, {
+            method: "post",
+            headers: { Authorization: `Bearer ${localStorage.getItem("lichess_token")}` },
+          })
+            .then((response) => {
+              console.log("Posted White move to Lichess:", response);
+            })
+            .catch((error) => {
+              console.error("Error posting White move to Lichess:", error);
+            });
+        }
+      }
     };
-  }, [socket, game, gameId, fetchBody]);
 
-  /**
-   * 3) Suggest move logic (unchanged)
-   */
+    const interval = setInterval(checkForWhiteMove, 1000);
+    return () => clearInterval(interval);
+  }, [game, gameId, fetchBody]);
+
   function findBestMove() {
-    // engine.evaluatePosition(game.fen());
-    // console.log("engine", engine);
+    // Implement your move suggestion logic here
   }
 
-  /**
-   * 4) Local onDrop (for front-end moves if needed)
-   *    - If you only want moves from the Pi, you can remove or disable this.
-   */
   function onDrop(sourceSquare: any, targetSquare: any, piece: any) {
-    const move = game.move({
-      from: sourceSquare,
-      to: targetSquare,
-      promotion:
-        game.get(sourceSquare)?.type === "p" &&
-        (targetSquare[1] === "1" || targetSquare[1] === "8")
-          ? "q"
-          : undefined,
-    });
-
-    // Illegal move
-    if (move === null) {
-      alert("Invalid move!");
-      return false;
-    }
-
-    // Update the board state
-    setGamePosition(game.fen());
-    setHighlightSquares({}); // Clear highlights
-    setCurrentTurn(game.turn() === "w" ? "White" : "Black");
-
-    // Send the move to the server (Lichess) if front-end user is also allowed to move
-    fetchBody(`/api/board/game/${gameId}/move/${move.from}${move.to}`, {
-      method: "post",
-      headers: { Authorization: `Bearer ${localStorage.getItem("lichess_token")}` },
-    })
-      .then((response) => {
-        console.log("response", response);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-
-    return true;
+    // This function is now only for manual moves, which should not be allowed
+    // as the physical board (ESP32) is making the moves
+    alert("Moves should be made on the physical board.");
+    return false;
   }
 
-  /**
-   * 5) Render
-   */
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
       <p className="text-md font-bold mb-2 p-2 bg-white rounded shadow">{blackPlayer}</p>
@@ -179,3 +132,4 @@ export default function PlayAIScreen() {
     </div>
   );
 }
+
